@@ -22,6 +22,7 @@ class Financials:
         self.financials = None
         self.income_statement = None
         self.balance_sheet = None
+        self.last_fy = None
 
     def retrieve_stock_info(self):
         """Returns a dictionary with stock information from yfinance package"""
@@ -42,8 +43,48 @@ class Financials:
 
         response = requests.request("GET", url, headers=headers, params=querystring)
         self.financials = json.loads(response.text)
-        self.income_statement = self.get_income_statement()
         self.balance_sheet = self.get_balance_sheet()
+        self.income_statement = self.get_income_statement()
+
+
+    def get_balance_sheet(self):
+        """Returns a DataFrame with selected balance sheet data"""
+
+        total_assets = []
+        current_assets = []
+        current_liabilities = []
+        short_debt = []
+        long_debt = []
+        equity = []
+        minority_interest = []
+        cash = []
+        ppe = []
+        bs_df = pd.DataFrame()
+
+        self.last_fy = self.financials['balanceSheetHistory']['balanceSheetStatements'][0]['endDate']
+
+        for financial in self.financials['balanceSheetHistory']['balanceSheetStatements']:
+            total_assets.append(financial['totalAssets']['raw'])
+            current_assets.append(financial['totalCurrentAssets']['raw'])
+            current_liabilities.append(financial['totalCurrentLiabilities']['raw'])
+            short_debt.append(financial['sellingGeneralAdministrative']['raw'])
+            long_debt.append(financial['interestExpense']['raw'])
+            equity.append(financial['netIncomeApplicableToCommonShares']['raw'])
+            minority_interest.append(financial['minorityInterest']['raw'])
+            cash.append(financial['cash']['raw'])
+            ppe.append(financial['propertyPlantEquipment']['raw'])
+
+        bs_df['current_assets'] = current_assets
+        bs_df['current_liabilities'] = current_liabilities
+        bs_df['short_debt'] = short_debt
+        bs_df['long_debt'] = long_debt
+        bs_df['equity'] = equity
+        bs_df['minority_interest'] = minority_interest
+        bs_df['cash'] = cash
+        bs_df['ppe'] = ppe
+
+        return bs_df
+
 
     def get_income_statement(self):
         """Returns a DataFrame with selected income statement data"""
@@ -69,43 +110,6 @@ class Financials:
 
         return is_df
 
-    def get_balance_sheet(self):
-        """Returns a DataFrame with selected balance sheet data"""
-
-        total_assets = []
-        current_assets = []
-        current_liabilities = []
-        short_debt = []
-        long_debt = []
-        equity = []
-        minority_interest = []
-        cash = []
-        ppe = []
-        bs_df = pd.DataFrame()
-
-        last_year = self.financials['balanceSheetHistory']['balanceSheetStatements'][0]['endDate']
-
-        for financial in self.financials['balanceSheetHistory']['balanceSheetStatements']:
-            total_assets.append(financial['totalAssets']['raw'])
-            current_assets.append(financial['totalCurrentAssets']['raw'])
-            current_liabilities.append(financial['totalCurrentLiabilities']['raw'])
-            short_debt.append(financial['sellingGeneralAdministrative']['raw'])
-            long_debt.append(financial['interestExpense']['raw'])
-            equity.append(financial['netIncomeApplicableToCommonShares']['raw'])
-            minority_interest.append(financial['minorityInterest']['raw'])
-            cash.append(financial['cash']['raw'])
-            ppe.append(financial['propertyPlantEquipment']['raw'])
-
-        bs_df['current_assets'] = current_assets
-        bs_df['current_liabilities'] = current_liabilities
-        bs_df['short_debt'] = short_debt
-        bs_df['long_debt'] = long_debt
-        bs_df['equity'] = equity
-        bs_df['minority_interest'] = minority_interest
-        bs_df['cash'] = cash
-        bs_df['ppe'] = ppe
-
-        return bs_df
 
     def csv_statements(self):
         """Export the income statement and balance sheet in csv format"""

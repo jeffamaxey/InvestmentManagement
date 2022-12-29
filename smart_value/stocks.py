@@ -26,6 +26,7 @@ class Stock(Securities):
         """Scrap the financial_data from yfinance API"""
 
         ticker_data = yh.Financials(self.security_code)
+        ticker_data.retrieve_financials()
 
         self.name = ticker_data.name
         self.price = ticker_data.price
