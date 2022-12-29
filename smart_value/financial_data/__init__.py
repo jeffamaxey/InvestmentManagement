@@ -1,1 +1,1 @@
-from security_classes.financial_data import *
+from smart_value.financial_data import *

@@ -12,7 +12,7 @@ def gen_val_xlsx(ticker):
         print("Check your stock ticker")
     else:
         # generates or update the valuation file
-        stock.create_val_xlsx()
+        stock.new_stock_model()
 
 
 def update_pipeline_monitor():

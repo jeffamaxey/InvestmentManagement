@@ -67,12 +67,15 @@ class Financials:
             total_assets.append(financial['totalAssets']['raw'])
             current_assets.append(financial['totalCurrentAssets']['raw'])
             current_liabilities.append(financial['totalCurrentLiabilities']['raw'])
-            short_debt.append(financial['sellingGeneralAdministrative']['raw'])
-            long_debt.append(financial['interestExpense']['raw'])
-            equity.append(financial['netIncomeApplicableToCommonShares']['raw'])
+            equity.append(int(financial['totalStockholderEquity']['raw']) + int(financial['minorityInterest']['raw']))
             minority_interest.append(financial['minorityInterest']['raw'])
             cash.append(financial['cash']['raw'])
             ppe.append(financial['propertyPlantEquipment']['raw'])
+
+        for debt in self.financials['summaryDetail']['timeSeries']:
+            short_debt.append(debt['annualCurrentDebt']['reportedValue']['raw'])
+            long_debt.append(debt['annualLongTermDebt']['reportedValue']['raw'])
+
 
         bs_df['current_assets'] = current_assets
         bs_df['current_liabilities'] = current_liabilities
