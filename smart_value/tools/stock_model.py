@@ -7,51 +7,47 @@ import pandas as pd
 import re
 
 
-class StockModel:
-    def __init__(self, ticker):
-        """ """
+def new_stock_model(ticker):
+    """Return a raw_fin_data xlsx for the stock"""
 
-    def new_stock_model(self):
-        """Return a raw_fin_data xlsx for the stock"""
+    new_bool = False
+    r = re.compile(".*Valuation_v")
 
-        new_bool = False
-        r = re.compile(".*Valuation_v")
-
-        # Copy the latest Valuation template
-        cwd = pathlib.Path.cwd().resolve()
-        try:
-            template_folder_path = cwd / 'templates' / 'Listed_template'
-            if pathlib.Path(template_folder_path).exists():
-                path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
-                             if template_folder_path.is_dir() and val_file_path.is_file()]
-                template_path_list = list(item for item in path_list if r.match(str(item)))
-                if len(template_path_list) > 1 or len(template_path_list) == 0:
-                    raise FileNotFoundError("The template file error", "temp_file")
-            else:
-                raise FileNotFoundError("The stock_template folder doesn't exist", "temp_folder")
-        except FileNotFoundError as err:
-            if err.args[1] == "temp_folder":
-                print("The stock_template folder doesn't exist")
-            if err.args[1] == "temp_file":
-                print("The template file error")
+    # Copy the latest Valuation template
+    cwd = pathlib.Path.cwd().resolve()
+    try:
+        template_folder_path = cwd / 'templates' / 'Listed_template'
+        if pathlib.Path(template_folder_path).exists():
+            path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
+                         if template_folder_path.is_dir() and val_file_path.is_file()]
+            template_path_list = list(item for item in path_list if r.match(str(item)))
+            if len(template_path_list) > 1 or len(template_path_list) == 0:
+                raise FileNotFoundError("The template file error", "temp_file")
         else:
-            new_val_name = self.security_code + "_" + os.path.basename(template_path_list[0])
-            new_val_path = cwd / new_val_name
-            if not pathlib.Path(new_val_path).exists():
-                print(f'Copying template to create {new_val_name}...')
-                shutil.copy(template_path_list[0], new_val_path)
-                new_bool = True
-            # load and update the new valuation xlsx
-            if os.path.exists(new_val_path):
-                print(f'Updating {new_val_name}...')
-                with xlwings.App(visible=False) as app:
-                    xl_book = xlwings.Book(new_val_path)
-                    self.update_dashboard(xl_book.sheets('Dashboard'), new_bool)
-                    self.update_data(xl_book.sheets('Data'))
-                    xl_book.save(new_val_name)
-                    xl_book.close()
-            else:
-                raise FileNotFoundError("The valuation file error", "val_file")
+            raise FileNotFoundError("The stock_template folder doesn't exist", "temp_folder")
+    except FileNotFoundError as err:
+        if err.args[1] == "temp_folder":
+            print("The stock_template folder doesn't exist")
+        if err.args[1] == "temp_file":
+            print("The template file error")
+    else:
+        new_val_name = ticker + "_" + os.path.basename(template_path_list[0])
+        new_val_path = cwd / new_val_name
+        if not pathlib.Path(new_val_path).exists():
+            print(f'Copying template to create {new_val_name}...')
+            shutil.copy(template_path_list[0], new_val_path)
+            new_bool = True
+        # load and update the new valuation xlsx
+        if os.path.exists(new_val_path):
+            print(f'Updating {new_val_name}...')
+            with xlwings.App(visible=False) as app:
+                xl_book = xlwings.Book(new_val_path)
+                self.update_dashboard(xl_book.sheets('Dashboard'), new_bool)
+                self.update_data(xl_book.sheets('Data'))
+                xl_book.save(new_val_name)
+                xl_book.close()
+        else:
+            raise FileNotFoundError("The valuation file error", "val_file")
 
 
 def update_dashboard(self, dash_sheet, new_bool=False):
@@ -80,26 +76,26 @@ def update_data(self, data_sheet):
 
     data_sheet.range('C3').value = self.is_df.columns[0]  # last financial year
     if len(str(self.is_df.iloc[0, 0])) <= 6:
-        figures_in = 1
+        report_unit = 1
     elif len(str(self.is_df.iloc[0, 0])) <= 9:
-        figures_in = 1000
+        report_unit = 1000
     else:
-        figures_in = int((len(str(self.is_df.iloc[0, 0])) - 9) / 3 + 0.99) * 1000
-    data_sheet.range('C4').value = figures_in
+        report_unit = int((len(str(self.is_df.iloc[0, 0])) - 9) / 3 + 0.99) * 1000
+    data_sheet.range('C4').value = report_unit
     # load income statement
     for i in range(len(self.is_df.columns)):
-        data_sheet.range((7, i + 3)).value = int(self.is_df.iloc[0, i] / figures_in)
-        data_sheet.range((9, i + 3)).value = int(self.is_df.iloc[1, i] / figures_in)
-        data_sheet.range((11, i + 3)).value = int(self.is_df.iloc[2, i] / figures_in)
-        data_sheet.range((17, i + 3)).value = int(self.is_df.iloc[3, i] / figures_in)
-        data_sheet.range((18, i + 3)).value = int(self.is_df.iloc[4, i] / figures_in)
+        data_sheet.range((7, i + 3)).value = int(self.is_df.iloc[0, i] / report_unit)
+        data_sheet.range((9, i + 3)).value = int(self.is_df.iloc[1, i] / report_unit)
+        data_sheet.range((11, i + 3)).value = int(self.is_df.iloc[2, i] / report_unit)
+        data_sheet.range((17, i + 3)).value = int(self.is_df.iloc[3, i] / report_unit)
+        data_sheet.range((18, i + 3)).value = int(self.is_df.iloc[4, i] / report_unit)
     # load balance sheet
     for i in range(1, len(self.bs_df.columns)):
-        data_sheet.range((20, i + 3)).value = int(self.bs_df.iloc[0, i] / figures_in)
-        data_sheet.range((21, i + 3)).value = int(self.bs_df.iloc[1, i] / figures_in)
-        data_sheet.range((22, i + 3)).value = int(self.bs_df.iloc[2, i] / figures_in)
-        data_sheet.range((23, i + 3)).value = int(self.bs_df.iloc[3, i] / figures_in)
-        data_sheet.range((25, i + 3)).value = int(self.bs_df.iloc[4, i] / figures_in)
-        data_sheet.range((26, i + 3)).value = int(self.bs_df.iloc[5, i] / figures_in)
-        data_sheet.range((27, i + 3)).value = int(self.bs_df.iloc[6, i] / figures_in)
-        data_sheet.range((28, i + 3)).value = int(self.bs_df.iloc[7, i] / figures_in)
+        data_sheet.range((20, i + 3)).value = int(self.bs_df.iloc[0, i] / report_unit)
+        data_sheet.range((21, i + 3)).value = int(self.bs_df.iloc[1, i] / report_unit)
+        data_sheet.range((22, i + 3)).value = int(self.bs_df.iloc[2, i] / report_unit)
+        data_sheet.range((23, i + 3)).value = int(self.bs_df.iloc[3, i] / report_unit)
+        data_sheet.range((25, i + 3)).value = int(self.bs_df.iloc[4, i] / report_unit)
+        data_sheet.range((26, i + 3)).value = int(self.bs_df.iloc[5, i] / report_unit)
+        data_sheet.range((27, i + 3)).value = int(self.bs_df.iloc[6, i] / report_unit)
+        data_sheet.range((28, i + 3)).value = int(self.bs_df.iloc[7, i] / report_unit)
