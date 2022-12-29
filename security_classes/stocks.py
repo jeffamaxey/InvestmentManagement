@@ -1,5 +1,6 @@
 from securities import *
 from financial_data import yahoo_data as yh
+from financial_data import exchange_rate as fx
 import xlwings
 import pathlib
 import shutil
@@ -7,7 +8,6 @@ import os
 from datetime import datetime
 import pandas as pd
 import re
-from security_classes.financial_data.exchange_rate import get_forex_rate
 
 
 class Stock(Securities):
@@ -96,7 +96,7 @@ class Stock(Securities):
         dash_sheet.range('H4').value = self.price[0]
         dash_sheet.range('I4').value = self.price[1]
         dash_sheet.range('H5').value = self.shares
-        dash_sheet.range('H13').value = get_forex_rate(self.report_currency, self.price[1])
+        dash_sheet.range('H13').value = fx.get_forex_rate(self.report_currency, self.price[1])
 
     def update_data(self, data_sheet):
         """Update the Data sheet"""
@@ -126,9 +126,3 @@ class Stock(Securities):
             data_sheet.range((26, i + 3)).value = int(self.bs_df.iloc[5, i] / figures_in)
             data_sheet.range((27, i + 3)).value = int(self.bs_df.iloc[6, i] / figures_in)
             data_sheet.range((28, i + 3)).value = int(self.bs_df.iloc[7, i] / figures_in)
-
-    def export_statements(self):
-        """Export the income statement and balance sheet"""
-
-        self.is_df.to_csv(f'{self.security_code}_income_statement.csv', sep=',', encoding='utf-8')
-        self.bs_df.to_csv(f'{self.security_code}_balance_sheet.csv', sep=',', encoding='utf-8')

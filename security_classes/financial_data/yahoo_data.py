@@ -18,10 +18,10 @@ class Financials:
         self.report_currency = self.stock_info['financialCurrency']
         self.next_earnings = pd.to_datetime(datetime.fromtimestamp(self.stock_info['mostRecentQuarter'])
                                             .strftime("%Y-%m-%d")) + pd.DateOffset(months=6)
-        # YH Finance API
-        self.financials = self.retrieve_financials()
-        self.income_statement = self.financials
-        self.balance_sheet = self.financials
+        # YH Finance API, only called when necessary
+        self.financials = None
+        self.income_statement = None
+        self.balance_sheet = None
 
     def retrieve_stock_info(self):
         """Returns a dictionary with stock information from yfinance package"""
@@ -29,7 +29,7 @@ class Financials:
         return Ticker(self.ticker).info
 
     def retrieve_financials(self):
-        """Returns a dictionary with financial data from YH Finance API"""
+        """Initialize the financial statement attributes a dictionary with financial data from YH Finance API"""
 
         # more info on YH finance API @ https://rapidapi.com/apidojo/api/yh-finance
 
@@ -41,23 +41,74 @@ class Financials:
         querystring = {"symbol": self.ticker, "region": "US"}
 
         response = requests.request("GET", url, headers=headers, params=querystring)
-        return json.loads(response.text)
+        self.financials = json.loads(response.text)
+        self.income_statement = self.get_income_statement()
+        self.balance_sheet = self.get_balance_sheet()
 
     def get_income_statement(self):
-        """Returns a DataFrame with income statement data"""
-        revenues = []
+        """Returns a DataFrame with selected income statement data"""
+        sales = []
         cogs = []
         op_expenses = []
+        interests = []
+        net_income = []
+        is_df = pd.DataFrame()
 
         for financial in self.financials['incomeStatementHistory']['incomeStatementHistory']:
-            revenues.append(financial['totalRevenue']['raw'])
+            sales.append(financial['totalRevenue']['raw'])
             cogs.append(financial['costOfRevenue']['raw'])
-            op_expenses.append(financial['totalOperatingExpenses']['raw'])
+            op_expenses.append(financial['sellingGeneralAdministrative']['raw'])
+            interests.append(financial['interestExpense']['raw'])
+            net_income.append(financial['netIncomeApplicableToCommonShares']['raw'])
 
-        print(revenues)
-        print(cogs)
-        print(op_expenses)
-        return None
+        is_df['sales'] = sales
+        is_df['cogs'] = cogs
+        is_df['op_expense'] = op_expenses
+        is_df['interests'] = interests
+        is_df['net_income'] = net_income
+
+        return is_df
 
     def get_balance_sheet(self):
-        return None
+        """Returns a DataFrame with selected balance sheet data"""
+
+        total_assets = []
+        current_assets = []
+        current_liabilities = []
+        short_debt = []
+        long_debt = []
+        equity = []
+        minority_interest = []
+        cash = []
+        ppe = []
+        bs_df = pd.DataFrame()
+
+        last_year = self.financials['balanceSheetHistory']['balanceSheetStatements'][0]['endDate']
+
+        for financial in self.financials['balanceSheetHistory']['balanceSheetStatements']:
+            total_assets.append(financial['totalAssets']['raw'])
+            current_assets.append(financial['totalCurrentAssets']['raw'])
+            current_liabilities.append(financial['totalCurrentLiabilities']['raw'])
+            short_debt.append(financial['sellingGeneralAdministrative']['raw'])
+            long_debt.append(financial['interestExpense']['raw'])
+            equity.append(financial['netIncomeApplicableToCommonShares']['raw'])
+            minority_interest.append(financial['minorityInterest']['raw'])
+            cash.append(financial['cash']['raw'])
+            ppe.append(financial['propertyPlantEquipment']['raw'])
+
+        bs_df['current_assets'] = current_assets
+        bs_df['current_liabilities'] = current_liabilities
+        bs_df['short_debt'] = short_debt
+        bs_df['long_debt'] = long_debt
+        bs_df['equity'] = equity
+        bs_df['minority_interest'] = minority_interest
+        bs_df['cash'] = cash
+        bs_df['ppe'] = ppe
+
+        return bs_df
+
+    def csv_statements(self):
+        """Export the income statement and balance sheet in csv format"""
+
+        self.income_statement.to_csv(f'{self.ticker}_income_statement.csv', sep=',', encoding='utf-8')
+        self.balance_sheet.to_csv(f'{self.ticker}_balance_sheet.csv', sep=',', encoding='utf-8')
