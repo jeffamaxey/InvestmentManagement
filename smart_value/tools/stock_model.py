@@ -11,7 +11,6 @@ class StockModel:
     def __init__(self, ticker):
         """ """
 
-
     def new_stock_model(self):
         """Return a raw_fin_data xlsx for the stock"""
 
@@ -21,7 +20,7 @@ class StockModel:
         # Copy the latest Valuation template
         cwd = pathlib.Path.cwd().resolve()
         try:
-            template_folder_path = cwd / 'templates' /'Listed_template'
+            template_folder_path = cwd / 'templates' / 'Listed_template'
             if pathlib.Path(template_folder_path).exists():
                 path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
                              if template_folder_path.is_dir() and val_file_path.is_file()]

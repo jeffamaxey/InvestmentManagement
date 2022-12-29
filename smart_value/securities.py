@@ -13,7 +13,7 @@ class Securities:
         self.current_irr = None
         self.risk_premium = None
         self.val_status = None
-        self.periodic_payment = None
+        self.periodic_payment = None  # dividend for stocks and coupon for bonds
         self.next_earnings = None  # next coupon date for bonds
         self.invest_horizon = None
         self.unit_cost = None
