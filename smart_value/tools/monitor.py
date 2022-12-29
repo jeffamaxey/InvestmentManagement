@@ -1,8 +1,6 @@
 from datetime import datetime
 import xlwings
 import pathlib
-import security_mod
-import scrap_mod
 import yfinance
 import pandas as pd
 import re
