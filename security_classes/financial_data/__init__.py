@@ -1,1 +1,1 @@
-import financial_data.yahoo_data
+from security_classes.financial_data import *

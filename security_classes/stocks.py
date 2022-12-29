@@ -1,5 +1,5 @@
 from securities import *
-from yfinance import Ticker
+from financial_data import yahoo_data as yh
 import xlwings
 import pathlib
 import shutil
@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import re
+from security_classes.financial_data.exchange_rate import get_forex_rate
 
 
 class Stock(Securities):
@@ -24,17 +25,16 @@ class Stock(Securities):
     def load_from_yf(self):
         """Scrap the financial_data from yfinance API"""
 
-        ticker_data = Ticker(self.security_code)
+        ticker_data = yh.Financials(self.security_code)
 
-        self.name = ticker_data.info['shortName']
-        self.price = [ticker_data.info['currentPrice'], ticker_data.info['currency']]
-        self.exchange = ticker_data.info['exchange']
-        self.shares = ticker_data.info['sharesOutstanding']
-        self.report_currency = ticker_data.info['financialCurrency']
-        self.is_df = scrap_mod.get_income_statement(self.security_code)
-        self.bs_df = scrap_mod.get_balance_sheet(self.security_code)
-        self.next_earnings = pd.to_datetime(datetime.fromtimestamp(ticker_data.info['mostRecentQuarter'])
-                                            .strftime("%Y-%m-%d")) + pd.DateOffset(months=6)
+        self.name = ticker_data.name
+        self.price = ticker_data.price
+        self.exchange = ticker_data.exchange
+        self.shares = ticker_data.shares
+        self.report_currency = ticker_data.report_currency
+        self.next_earnings = ticker_data.next_earnings
+        self.is_df = ticker_data.income_statement
+        self.bs_df = ticker_data.balance_sheet
 
     def create_val_xlsx(self):
         """Return a raw_fin_data xlsx for the stock"""
@@ -96,7 +96,7 @@ class Stock(Securities):
         dash_sheet.range('H4').value = self.price[0]
         dash_sheet.range('I4').value = self.price[1]
         dash_sheet.range('H5').value = self.shares
-        dash_sheet.range('H13').value = scrap_mod.get_forex_rate(self.report_currency, self.price[1])
+        dash_sheet.range('H13').value = get_forex_rate(self.report_currency, self.price[1])
 
     def update_data(self, data_sheet):
         """Update the Data sheet"""
