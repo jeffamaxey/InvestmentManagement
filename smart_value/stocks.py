@@ -31,3 +31,11 @@ class Stock(Securities):
         self.next_earnings = ticker_data.next_earnings
         self.is_df = ticker_data.income_statement
         self.bs_df = ticker_data.balance_sheet
+
+    def load_data(self, option=1):
+        """Load the data using 1 = yfinance, 2 = SEC API"""
+
+        if option == 1:
+            self.load_from_yf()
+        else:
+            pass

@@ -5,22 +5,25 @@ import os
 from datetime import datetime
 import pandas as pd
 import re
+import smart_value.stocks
 
 
-def new_stock_model(ticker):
-    """Return a raw_fin_data xlsx for the stock"""
+def model_exist(ticker):
+    """Creates a new model if it doesn't already exist"""
 
-    new_bool = False
-    r = re.compile(".*Valuation_v")
+    stock_regex = re.compile(".*Stock_Valuation_v")
 
-    # Copy the latest Valuation template
+    # Relevant Paths
     cwd = pathlib.Path.cwd().resolve()
+    template_folder_path = cwd / 'templates' / 'Listed_template'
+    new_bool = False
+
     try:
-        template_folder_path = cwd / 'templates' / 'Listed_template'
+        # Check if the template exists
         if pathlib.Path(template_folder_path).exists():
             path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
                          if template_folder_path.is_dir() and val_file_path.is_file()]
-            template_path_list = list(item for item in path_list if r.match(str(item)))
+            template_path_list = list(item for item in path_list if stock_regex.match(str(item)))
             if len(template_path_list) > 1 or len(template_path_list) == 0:
                 raise FileNotFoundError("The template file error", "temp_file")
         else:
@@ -31,71 +34,81 @@ def new_stock_model(ticker):
         if err.args[1] == "temp_file":
             print("The template file error")
     else:
-        new_val_name = ticker + "_" + os.path.basename(template_path_list[0])
-        new_val_path = cwd / new_val_name
-        if not pathlib.Path(new_val_path).exists():
-            print(f'Copying template to create {new_val_name}...')
-            shutil.copy(template_path_list[0], new_val_path)
+        # New model path
+        model_name = ticker + "_" + os.path.basename(template_path_list[0])
+        new_path = cwd / model_name
+        if not pathlib.Path(new_path).exists():
+            # Creates a new model file if not already exists in cwd
+            print(f'Copying template to create {model_name}...')
             new_bool = True
-        # load and update the new valuation xlsx
-        if os.path.exists(new_val_path):
-            print(f'Updating {new_val_name}...')
-            with xlwings.App(visible=False) as app:
-                xl_book = xlwings.Book(new_val_path)
-                self.update_dashboard(xl_book.sheets('Dashboard'), new_bool)
-                self.update_data(xl_book.sheets('Data'))
-                xl_book.save(new_val_name)
-                xl_book.close()
-        else:
-            raise FileNotFoundError("The valuation file error", "val_file")
+            shutil.copy(template_path_list[0], new_path)
+
+        return model_name, new_path, new_bool
+
+def new_stock_model(ticker):
+    """Creates a new model if it doesn't already exist, otherwise update the model"""
+
+    path_tuple = model_exist(ticker)
+
+    company = smart_value.stocks.Stock(ticker)
+    company.load_data()  # uses yahoo finance data by default
+
+    # update the new model
+    print(f'Updating {path_tuple[0]}...')
+    with xlwings.App(visible=False) as app:
+        model_xl = xlwings.Book(path_tuple[1])
+        update_dashboard(model_xl.sheets('Dashboard'), company, path_tuple[-1])
+        update_data(model_xl.sheets('Data'), company)
+        model_xl.save(path_tuple[0])
+        model_xl.close()
 
 
-def update_dashboard(self, dash_sheet, new_bool=False):
+def update_dashboard(dash_sheet, stock, new_bool):
     """Update the Dashboard sheet"""
 
     if new_bool:
-        dash_sheet.range('C4').value = self.name
+        dash_sheet.range('C4').value = stock.name
         dash_sheet.range('C5').value = datetime.today().strftime('%Y-%m-%d')
-    dash_sheet.range('C3').value = self.security_code
-    dash_sheet.range('H3').value = self.exchange
-    dash_sheet.range('H12').value = self.report_currency
-    dash_sheet.range('C6').value = self.next_earnings
+    dash_sheet.range('C3').value = stock.security_code
+    dash_sheet.range('H3').value = stock.exchange
+    dash_sheet.range('H12').value = stock.report_currency
+    dash_sheet.range('C6').value = stock.next_earnings
     if pd.to_datetime(dash_sheet.range('C5').value) > pd.to_datetime(dash_sheet.range('C6').value):
-        self.val_status = "Outdated"
+        stock.val_status = "Outdated"
     else:
-        self.val_status = ""
-    dash_sheet.range('E6').value = self.val_status
-    dash_sheet.range('H4').value = self.price[0]
-    dash_sheet.range('I4').value = self.price[1]
-    dash_sheet.range('H5').value = self.shares
-    dash_sheet.range('H13').value = self.fx_rate
+        stock.val_status = ""
+    dash_sheet.range('E6').value = stock.val_status
+    dash_sheet.range('H4').value = stock.price[0]
+    dash_sheet.range('I4').value = stock.price[1]
+    dash_sheet.range('H5').value = stock.shares
+    dash_sheet.range('H13').value = stock.fx_rate
 
 
-def update_data(self, data_sheet):
+def update_data(data_sheet, stock):
     """Update the Data sheet"""
 
-    data_sheet.range('C3').value = self.is_df.columns[0]  # last financial year
-    if len(str(self.is_df.iloc[0, 0])) <= 6:
+    data_sheet.range('C3').value = stock.is_df.columns[0]  # last financial year
+    if len(str(stock.is_df.iloc[0, 0])) <= 6:
         report_unit = 1
-    elif len(str(self.is_df.iloc[0, 0])) <= 9:
+    elif len(str(stock.is_df.iloc[0, 0])) <= 9:
         report_unit = 1000
     else:
-        report_unit = int((len(str(self.is_df.iloc[0, 0])) - 9) / 3 + 0.99) * 1000
+        report_unit = int((len(str(stock.is_df.iloc[0, 0])) - 9) / 3 + 0.99) * 1000
     data_sheet.range('C4').value = report_unit
     # load income statement
-    for i in range(len(self.is_df.columns)):
-        data_sheet.range((7, i + 3)).value = int(self.is_df.iloc[0, i] / report_unit)
-        data_sheet.range((9, i + 3)).value = int(self.is_df.iloc[1, i] / report_unit)
-        data_sheet.range((11, i + 3)).value = int(self.is_df.iloc[2, i] / report_unit)
-        data_sheet.range((17, i + 3)).value = int(self.is_df.iloc[3, i] / report_unit)
-        data_sheet.range((18, i + 3)).value = int(self.is_df.iloc[4, i] / report_unit)
+    for i in range(len(stock.is_df.columns)):
+        data_sheet.range((7, i + 3)).value = int(stock.is_df.iloc[0, i] / report_unit)
+        data_sheet.range((9, i + 3)).value = int(stock.is_df.iloc[1, i] / report_unit)
+        data_sheet.range((11, i + 3)).value = int(stock.is_df.iloc[2, i] / report_unit)
+        data_sheet.range((17, i + 3)).value = int(stock.is_df.iloc[3, i] / report_unit)
+        data_sheet.range((18, i + 3)).value = int(stock.is_df.iloc[4, i] / report_unit)
     # load balance sheet
-    for i in range(1, len(self.bs_df.columns)):
-        data_sheet.range((20, i + 3)).value = int(self.bs_df.iloc[0, i] / report_unit)
-        data_sheet.range((21, i + 3)).value = int(self.bs_df.iloc[1, i] / report_unit)
-        data_sheet.range((22, i + 3)).value = int(self.bs_df.iloc[2, i] / report_unit)
-        data_sheet.range((23, i + 3)).value = int(self.bs_df.iloc[3, i] / report_unit)
-        data_sheet.range((25, i + 3)).value = int(self.bs_df.iloc[4, i] / report_unit)
-        data_sheet.range((26, i + 3)).value = int(self.bs_df.iloc[5, i] / report_unit)
-        data_sheet.range((27, i + 3)).value = int(self.bs_df.iloc[6, i] / report_unit)
-        data_sheet.range((28, i + 3)).value = int(self.bs_df.iloc[7, i] / report_unit)
+    for i in range(1, len(stock.bs_df.columns)):
+        data_sheet.range((20, i + 3)).value = int(stock.bs_df.iloc[0, i] / report_unit)
+        data_sheet.range((21, i + 3)).value = int(stock.bs_df.iloc[1, i] / report_unit)
+        data_sheet.range((22, i + 3)).value = int(stock.bs_df.iloc[2, i] / report_unit)
+        data_sheet.range((23, i + 3)).value = int(stock.bs_df.iloc[3, i] / report_unit)
+        data_sheet.range((25, i + 3)).value = int(stock.bs_df.iloc[4, i] / report_unit)
+        data_sheet.range((26, i + 3)).value = int(stock.bs_df.iloc[5, i] / report_unit)
+        data_sheet.range((27, i + 3)).value = int(stock.bs_df.iloc[6, i] / report_unit)
+        data_sheet.range((28, i + 3)).value = int(stock.bs_df.iloc[7, i] / report_unit)
