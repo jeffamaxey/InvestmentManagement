@@ -9,12 +9,15 @@ class Financials:
     def __init__(self, ticker):
         self.ticker = ticker
         # yfinance
-        self.stock_data = Ticker(self.ticker)
+        try:
+            self.stock_data = Ticker(self.ticker)
+        except KeyError:
+            print("Check your stock ticker")
         self.name = self.stock_data.info['shortName']
         self.price = [self.stock_data.info['currentPrice'], self.stock_data.info['currency']]
         self.exchange = self.stock_data.info['exchange']
         self.shares = self.stock_data.info['sharesOutstanding']
-        self.report_currency = self.stock_data['financialCurrency']
+        self.report_currency = self.stock_data.info['financialCurrency']
         self.dividends = -int(self.stock_data.get_cashflow().fillna(0).loc['CommonStockDividendPaid'][0])/self.shares
         self.next_earnings = pd.to_datetime(datetime.fromtimestamp(self.stock_data.info['mostRecentQuarter'])
                                             .strftime("%Y-%m-%d")) + pd.DateOffset(months=6)
@@ -26,6 +29,16 @@ class Financials:
         """Returns a DataFrame with selected balance sheet data"""
 
         balance_sheet = self.stock_data.get_balance_sheet()
+        dummy_list = [None, None, None, None, None, None, None, None, None, None, None]
+        dummy_df = pd.Series(dummy_list, index=['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
+                                   'CurrentDebtAndCapitalLeaseObligation',
+                                   'CurrentCapitalLeaseObligation',
+                                   'LongTermDebtAndCapitalLeaseObligation',
+                                   'LongTermCapitalLeaseObligation',
+                                   'TotalEquityGrossMinorityInterest',
+                                   'MinorityInterest', 'CashAndCashEquivalents', 'NetPPE'])
+
+        print(balance_sheet)
         bs_df = balance_sheet.loc[['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
                                    'CurrentDebtAndCapitalLeaseObligation',
                                    'CurrentCapitalLeaseObligation',

@@ -1,20 +1,10 @@
 from datetime import datetime
-import smart_value.stocks
-import smart_value.tools.stock_model
-import smart_value.tools.monitor
+import smart_value
 
 def gen_val_xlsx(ticker):
     """generate or update a valuation file with argument, ticker"""
 
-    company = smart_value.stocks.Stock(ticker)
-    try:
-        # load from yahoo finance
-        company.load_from_yf()
-    except KeyError:
-        print("Check your stock ticker")
-    else:
-        # generates or update the valuation file
-        smart_value.tools.stock_model.new_stock_model(ticker)
+    smart_value.tools.stock_model.new_stock_model(ticker)
 
 
 def update_pipeline_monitor():
@@ -31,7 +21,7 @@ def days_between(d1, d2):
 
 
 if __name__ == '__main__':
-    # stare_list = ['0806.HK', '1475.HK', '1766.HK', '6186.HK']
-    # for s in stare_list:
-    #    gen_val_xlsx(s)
-    update_pipeline_monitor()
+    stare_list = ['0806.HK']
+    for s in stare_list:
+       gen_val_xlsx(s)
+    # update_pipeline_monitor()

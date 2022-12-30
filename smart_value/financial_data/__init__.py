@@ -1,1 +1,0 @@
-from smart_value.financial_data import *
