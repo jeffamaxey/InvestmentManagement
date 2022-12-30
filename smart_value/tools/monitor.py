@@ -1,24 +1,23 @@
 from datetime import datetime
 import xlwings
 import pathlib
-import yfinance
 import pandas as pd
 import re
-
+import smart_value.stocks
 
 def update_stocks_val(dash_sheet):
     """Update the stock valuations in the pipeline folder"""
 
-    ticker_info = yfinance.Ticker(dash_sheet.range('C3').value).info
+    ticker = dash_sheet.range('C3').value
+    company = smart_value.stocks.Stock(ticker)
 
     if pd.to_datetime(dash_sheet.range('C5').value) > pd.to_datetime(dash_sheet.range('C6').value):
         dash_sheet.range('E6').value = "Outdated"
     else:
         dash_sheet.range('E6').value = ""
-    dash_sheet.range('H4').value = ticker_info['currentPrice']
-    # dash_sheet.range('H5').value = ticker_info['sharesOutstanding']
-    dash_sheet.range('H13').value = scrap_mod.get_forex_rate(dash_sheet.range('H12').value,
-                                                             dash_sheet.range('I4').value)
+    dash_sheet.range('H4').value = company.price
+    dash_sheet.range('H5').value = company.shares
+    dash_sheet.range('H13').value = company.fx_rate
 
 
 def instantiate_asset(p):
@@ -34,7 +33,7 @@ def instantiate_asset(p):
         if r_stock.match(str(p)):
             update_stocks_val(dash_sheet)
         # instantiate the assets
-        a = security_mod.Asset(dash_sheet.range('C3').value)
+        a = smart_value.stocks.Stock(dash_sheet.range('C3').value)
         a.name = dash_sheet.range('C4').value
         a.exchange = dash_sheet.range('H3').value
         a.price = dash_sheet.range('H4').value

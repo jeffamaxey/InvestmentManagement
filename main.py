@@ -1,24 +1,26 @@
 from datetime import datetime
-
+import smart_value.stocks
+import smart_value.tools.stock_model
+import smart_value.tools.monitor
 
 def gen_val_xlsx(ticker):
     """generate or update a valuation file with argument, ticker"""
 
-    stock = security_mod.Stock(ticker)
+    company = smart_value.stocks.Stock(ticker)
     try:
         # load from yahoo finance
-        stock.load_from_yf()
+        company.load_from_yf()
     except KeyError:
         print("Check your stock ticker")
     else:
         # generates or update the valuation file
-        stock.new_stock_model()
+        smart_value.tools.stock_model.new_stock_model(ticker)
 
 
 def update_pipeline_monitor():
     """Update the pipeline monitor"""
 
-    o = pipline_mod.Pipeline()
+    o = smart_value.tools.monitor.Pipeline()
     o.load_opportunities()
 
 
