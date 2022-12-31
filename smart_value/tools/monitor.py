@@ -5,6 +5,7 @@ import pandas as pd
 import re
 import smart_value.stocks
 
+
 def update_stocks_val(dash_sheet):
     """Update the stock valuations in the pipeline folder"""
 

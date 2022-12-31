@@ -8,21 +8,6 @@ import re
 import smart_value.stocks
 
 
-def update_stock_model(ticker, model_name, model_path, new_bool):
-    """Update the model"""
-
-    company = smart_value.stocks.Stock(ticker, "yf") # uses yahoo finance data by default
-
-    # update the new model
-    print(f'Updating {model_name}...')
-    with xlwings.App(visible=False) as app:
-        model_xl = xlwings.Book(model_path)
-        update_dashboard(model_xl.sheets('Dashboard'), company, new_bool)
-        update_data(model_xl.sheets('Data'), company)
-        model_xl.save(model_path)
-        model_xl.close()
-
-
 def new_stock_model(ticker):
     """Creates a new model if it doesn't already exist, then update"""
 
@@ -39,7 +24,7 @@ def new_stock_model(ticker):
         if pathlib.Path(template_folder_path).exists():
             path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
                          if template_folder_path.is_dir() and val_file_path.is_file()]
-            template_path_list = list(item for item in path_list if stock_regex.match(str(item)) and \
+            template_path_list = list(item for item in path_list if stock_regex.match(str(item)) and
                                       not negative_regex.match(str(item)))
             if len(template_path_list) > 1 or len(template_path_list) == 0:
                 raise FileNotFoundError("The template file error", "temp_file")
@@ -61,6 +46,21 @@ def new_stock_model(ticker):
             shutil.copy(template_path_list[0], model_path)
         # update the model
         update_stock_model(ticker, model_name, model_path, new_bool)
+
+
+def update_stock_model(ticker, model_name, model_path, new_bool):
+    """Update the model"""
+
+    company = smart_value.stocks.Stock(ticker, "yf")  # uses yahoo finance data by default
+
+    # update the new model
+    print(f'Updating {model_name}...')
+    with xlwings.App(visible=False) as app:
+        model_xl = xlwings.Book(model_path)
+        update_dashboard(model_xl.sheets('Dashboard'), company, new_bool)
+        update_data(model_xl.sheets('Data'), company)
+        model_xl.save(model_path)
+        model_xl.close()
 
 
 def update_dashboard(dash_sheet, stock, new_bool):
@@ -88,7 +88,7 @@ def update_dashboard(dash_sheet, stock, new_bool):
 def update_data(data_sheet, stock):
     """Update the Data sheet"""
 
-    data_sheet.range('C3').value = stock.is_df.columns[0] # last financial year
+    data_sheet.range('C3').value = stock.is_df.columns[0]  # last financial year
     if len(str(stock.is_df.iloc[0, 0])) <= 6:
         report_unit = 1
     elif len(str(stock.is_df.iloc[0, 0])) <= 9:
