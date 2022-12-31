@@ -29,7 +29,6 @@ class Stock(Securities):
         self.report_currency = ticker_data.report_currency
         self.fx_rate = fx.get_forex_rate(self.report_currency, self.price[1])
         self.periodic_payment = ticker_data.dividends
-        self.next_earnings = ticker_data.next_earnings
         self.is_df = ticker_data.income_statement
         self.bs_df = ticker_data.balance_sheet
 

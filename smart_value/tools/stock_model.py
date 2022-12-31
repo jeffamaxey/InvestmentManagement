@@ -72,7 +72,6 @@ def update_dashboard(dash_sheet, stock, new_bool):
         dash_sheet.range('C5').value = datetime.today().strftime('%Y-%m-%d')
         dash_sheet.range('I3').value = stock.exchange
         dash_sheet.range('I11').value = stock.report_currency
-        dash_sheet.range('C6').value = stock.next_earnings  # fix needed
 
     if pd.to_datetime(dash_sheet.range('C5').value) > pd.to_datetime(dash_sheet.range('C6').value):
         stock.val_status = "Outdated"
@@ -89,7 +88,7 @@ def update_dashboard(dash_sheet, stock, new_bool):
 def update_data(data_sheet, stock):
     """Update the Data sheet"""
 
-    data_sheet.range('C3').value = stock.is_df.columns[0]  # last financial year
+    data_sheet.range('C3').value = stock.is_df.columns[0] # last financial year
     if len(str(stock.is_df.iloc[0, 0])) <= 6:
         report_unit = 1
     elif len(str(stock.is_df.iloc[0, 0])) <= 9:
