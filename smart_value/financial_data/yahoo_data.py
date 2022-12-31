@@ -29,23 +29,25 @@ class Financials:
         """Returns a DataFrame with selected balance sheet data"""
 
         balance_sheet = self.stock_data.get_balance_sheet()
-        dummy_list = [None, None, None, None, None, None, None, None, None, None, None]
-        dummy_df = pd.Series(dummy_list, index=['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
-                                   'CurrentDebtAndCapitalLeaseObligation',
-                                   'CurrentCapitalLeaseObligation',
-                                   'LongTermDebtAndCapitalLeaseObligation',
-                                   'LongTermCapitalLeaseObligation',
-                                   'TotalEquityGrossMinorityInterest',
-                                   'MinorityInterest', 'CashAndCashEquivalents', 'NetPPE'])
-
-        print(balance_sheet)
-        bs_df = balance_sheet.loc[['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
-                                   'CurrentDebtAndCapitalLeaseObligation',
-                                   'CurrentCapitalLeaseObligation',
-                                   'LongTermDebtAndCapitalLeaseObligation',
-                                   'LongTermCapitalLeaseObligation',
-                                   'TotalEquityGrossMinorityInterest',
-                                   'MinorityInterest', 'CashAndCashEquivalents', 'NetPPE']]
+        # Start of Cleaning: make sure the data has all the required indexes
+        dummy = {"Dummy": [None, None, None, None, None, None, None, None, None, None, None]}
+        dummy_df = pd.DataFrame(dummy, index=['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
+                                              'CurrentDebtAndCapitalLeaseObligation',
+                                              'CurrentCapitalLeaseObligation',
+                                              'LongTermDebtAndCapitalLeaseObligation',
+                                              'LongTermCapitalLeaseObligation',
+                                              'TotalEquityGrossMinorityInterest',
+                                              'MinorityInterest', 'CashAndCashEquivalents', 'NetPPE'])
+        clean_bs = dummy_df.join(balance_sheet)
+        bs_df = clean_bs.loc[['TotalAssets', 'CurrentAssets', 'CurrentLiabilities',
+                              'CurrentDebtAndCapitalLeaseObligation',
+                              'CurrentCapitalLeaseObligation',
+                              'LongTermDebtAndCapitalLeaseObligation',
+                              'LongTermCapitalLeaseObligation',
+                              'TotalEquityGrossMinorityInterest',
+                              'MinorityInterest', 'CashAndCashEquivalents', 'NetPPE']]
+        bs_df.drop('Dummy', inplace=True, axis=1)
+        # Ending of Cleaning: drop the dummy column after join
 
         return bs_df.fillna(0)
 
