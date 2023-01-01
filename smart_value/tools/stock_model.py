@@ -9,7 +9,11 @@ import smart_value.stocks
 
 
 def new_stock_model(ticker):
-    """Creates a new model if it doesn't already exist, then update"""
+    """Creates a new model if it doesn't already exist, then update.
+
+    :param ticker: the string ticker of the stock
+    :raises FileNotFoundError: raises an exception when there is an error related to the model files or path
+    """
 
     stock_regex = re.compile(".*Stock_Valuation_v")
     negative_regex = re.compile(".*~.*")
@@ -49,7 +53,13 @@ def new_stock_model(ticker):
 
 
 def update_stock_model(ticker, model_name, model_path, new_bool):
-    """Update the model"""
+    """Update the model.
+
+    :param ticker: the string ticker of the stock
+    :param model_name: the model file name
+    :param model_path: the model file path
+    :param new_bool: False if there is a model exists, true otherwise
+    """
 
     company = smart_value.stocks.Stock(ticker, "yf")  # uses yahoo finance data by default
 
@@ -64,7 +74,12 @@ def update_stock_model(ticker, model_name, model_path, new_bool):
 
 
 def update_dashboard(dash_sheet, stock, new_bool):
-    """Update the Dashboard sheet"""
+    """Update the Dashboard sheet.
+
+    :param dash_sheet: the xlwings object of the model
+    :param stock: the Stock object
+    :param new_bool: False if there is a model exists, true otherwise
+    """
 
     if new_bool:
         dash_sheet.range('C3').value = stock.security_code
@@ -86,7 +101,11 @@ def update_dashboard(dash_sheet, stock, new_bool):
 
 
 def update_data(data_sheet, stock):
-    """Update the Data sheet"""
+    """Update the Data sheet.
+
+    :param data_sheet: the xlwings object of the model
+    :param stock: the Stock object
+    """
 
     data_sheet.range('C3').value = stock.is_df.columns[0]  # last financial year
     if len(str(stock.is_df.iloc[0, 0])) <= 6:

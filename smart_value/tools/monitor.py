@@ -22,7 +22,11 @@ def update_stocks_val(dash_sheet):
 
 
 def instantiate_asset(p):
-    """initiate an asset from the valuation file"""
+    """initiate an asset from the valuation file
+
+    :param p: path of the model
+    :returns: asset class instance
+    """
 
     r_stock = re.compile(".*_Stock_Valuation_v")
 

@@ -6,8 +6,11 @@ from smart_value.financial_data import exchange_rate as fx
 class Stock(Securities):
     """a type of Securities"""
 
-    def __init__(self, security_code, option="yf"):
-        """ """
+    def __init__(self, security_code, source="yf"):
+        """
+        :param security_code: string ticker of the stock
+        :param source: "yf" chooses yahoo finance
+        """
         super().__init__(security_code)
 
         self.invest_horizon = 3  # 3 years holding period for stock by default
@@ -15,7 +18,7 @@ class Stock(Securities):
         self.is_df = None
         self.bs_df = None
         self.fx_rate = None
-        self.load_data(option)
+        self.source = source
 
     def load_from_yf(self):
         """Scrap the financial_data from yfinance API"""
@@ -32,10 +35,10 @@ class Stock(Securities):
         self.is_df = ticker_data.income_statement
         self.bs_df = ticker_data.balance_sheet
 
-    def load_data(self, option="yf"):
-        """Load the data using 1 = yfinance, 2 = SEC API"""
+    def load_data(self):
+        """data source selector."""
 
-        if option =="yf":
+        if self.source == "yf":
             self.load_from_yf()
         else:
             pass  # Other sources of data to-be-implemented

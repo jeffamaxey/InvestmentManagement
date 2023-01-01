@@ -1,6 +1,7 @@
 from datetime import datetime
 import smart_value
 
+
 def gen_val_xlsx(ticker):
     """generate or update a valuation file with argument, ticker"""
 
@@ -23,5 +24,5 @@ def days_between(d1, d2):
 if __name__ == '__main__':
     stare_list = ['0806.HK']
     for s in stare_list:
-       gen_val_xlsx(s)
+        gen_val_xlsx(s)
     # update_pipeline_monitor()
