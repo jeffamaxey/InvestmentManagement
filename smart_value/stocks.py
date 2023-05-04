@@ -40,5 +40,3 @@ class Stock(Securities):
 
         if self.source == "yf":
             self.load_from_yf()
-        else:
-            pass  # Other sources of data to-be-implemented

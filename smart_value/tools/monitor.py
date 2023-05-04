@@ -71,14 +71,13 @@ class Pipeline:
         r = re.compile(".*Valuation_v")
 
         try:
-            if pathlib.Path(opportunities_folder_path).exists():
-                path_list = [val_file_path for val_file_path in opportunities_folder_path.iterdir()
-                             if opportunities_folder_path.is_dir() and val_file_path.is_file()]
-                opportunities_path_list = list(item for item in path_list if r.match(str(item)))
-                if len(opportunities_path_list) == 0:
-                    raise FileNotFoundError("No opportunity file", "opp_file")
-            else:
+            if not pathlib.Path(opportunities_folder_path).exists():
                 raise FileNotFoundError("The opportunities folder doesn't exist", "opp_folder")
+            path_list = [val_file_path for val_file_path in opportunities_folder_path.iterdir()
+                         if opportunities_folder_path.is_dir() and val_file_path.is_file()]
+            opportunities_path_list = [item for item in path_list if r.match(str(item))]
+            if not opportunities_path_list:
+                raise FileNotFoundError("No opportunity file", "opp_file")
         except FileNotFoundError as err:
             if err.args[1] == "opp_folder":
                 print("The opportunities folder doesn't exist")
@@ -111,8 +110,7 @@ class Pipeline:
         monitor_sheet = pipline_book.sheets('Monitor')
         monitor_sheet.range('B5:N200').clear_contents()
 
-        r = 5
-        for a in self.assets:
+        for r, a in enumerate(self.assets, start=5):
             monitor_sheet.range((r, 2)).value = a.security_code
             monitor_sheet.range((r, 3)).value = a.name
             monitor_sheet.range((r, 4)).value = a.exchange
@@ -126,7 +124,6 @@ class Pipeline:
             monitor_sheet.range((r, 12)).value = a.next_earnings
             monitor_sheet.range((r, 13)).value = a.invest_horizon
             monitor_sheet.range((r, 14)).value = a.val_status
-            r += 1
 
     def update_holdings(self, pipline_book):
         """update the Current_Holdings sheet in the Pipeline_monitor file"""
@@ -149,4 +146,4 @@ class Pipeline:
                 k += 1
 
         # Current Holdings
-        holding_sheet.range('I2').value = datetime.today().strftime('%Y-%m-%d')
+        holding_sheet.range('I2').value = datetime.now().strftime('%Y-%m-%d')

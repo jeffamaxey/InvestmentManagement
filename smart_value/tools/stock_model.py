@@ -24,16 +24,18 @@ def new_stock_model(ticker):
     new_bool = False
 
     try:
-        # Check if the template exists
-        if pathlib.Path(template_folder_path).exists():
-            path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
-                         if template_folder_path.is_dir() and val_file_path.is_file()]
-            template_path_list = list(item for item in path_list if stock_regex.match(str(item)) and
-                                      not negative_regex.match(str(item)))
-            if len(template_path_list) > 1 or len(template_path_list) == 0:
-                raise FileNotFoundError("The template file error", "temp_file")
-        else:
+        if not pathlib.Path(template_folder_path).exists():
             raise FileNotFoundError("The stock_template folder doesn't exist", "temp_folder")
+        path_list = [val_file_path for val_file_path in template_folder_path.iterdir()
+                     if template_folder_path.is_dir() and val_file_path.is_file()]
+        template_path_list = [
+            item
+            for item in path_list
+            if stock_regex.match(str(item))
+            and not negative_regex.match(str(item))
+        ]
+        if len(template_path_list) > 1 or not template_path_list:
+            raise FileNotFoundError("The template file error", "temp_file")
     except FileNotFoundError as err:
         if err.args[1] == "temp_folder":
             print("The stock_template folder doesn't exist")
@@ -84,7 +86,7 @@ def update_dashboard(dash_sheet, stock, new_bool):
     if new_bool:
         dash_sheet.range('C3').value = stock.security_code
         dash_sheet.range('C4').value = stock.name
-        dash_sheet.range('C5').value = datetime.today().strftime('%Y-%m-%d')
+        dash_sheet.range('C5').value = datetime.now().strftime('%Y-%m-%d')
         dash_sheet.range('I3').value = stock.exchange
         dash_sheet.range('I11').value = stock.report_currency
 
